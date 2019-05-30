@@ -60,18 +60,20 @@ RUN cmake .. && make && make install
 RUN ldconfig
 
 # install librealsense
-WORKDIR /home/robot/code
-RUN apt-get update && apt-get install -y git \
-      libssl-dev \
-      libusb-1.0-0-dev \
-      pkg-config \
-      libgtk-3-dev \
-      libglfw3-dev &&\
-    rm -rf /var/lib/apt/lists/* &&\
-    git clone --depth=1 https://github.com/IntelRealSense/librealsense.git -b v2.17.1 &&\
-    cd librealsense && mkdir -p build && cd build &&\
-    cmake ../ -DBUILD_EXAMPLES=true &&\
-    make uninstall && make clean && make -j8 && make install &&\
-    mkdir -p /etc/udev/rules.d &&\
-    cd ../ && cp config/99-realsense-libusb.rules /etc/udev/rules.d/ &&\
-    ldconfig
+#WORKDIR /home/robot/code
+#RUN apt-get update && apt-get install -y git \
+#      libssl-dev \
+#      libusb-1.0-0-dev \
+#      pkg-config \
+#      libgtk-3-dev \
+#      libglfw3-dev &&\
+#    rm -rf /var/lib/apt/lists/* &&\
+#    git clone --depth=1 https://github.com/IntelRealSense/librealsense.git -b v2.17.1 &&\
+#    cd librealsense && mkdir -p build && cd build &&\
+#    cmake ../ -DBUILD_EXAMPLES=true &&\
+#    make uninstall && make clean && make -j8 && make install &&\
+#    mkdir -p /etc/udev/rules.d &&\
+#    cd ../ && cp config/99-realsense-libusb.rules /etc/udev/rules.d/ &&\
+#    ldconfig
+
+WORKDIR /root/
