@@ -60,20 +60,49 @@ RUN cmake .. && make && make install
 RUN ldconfig
 
 # install librealsense
-#WORKDIR /home/robot/code
-#RUN apt-get update && apt-get install -y git \
-#      libssl-dev \
-#      libusb-1.0-0-dev \
-#      pkg-config \
-#      libgtk-3-dev \
-#      libglfw3-dev &&\
-#    rm -rf /var/lib/apt/lists/* &&\
-#    git clone --depth=1 https://github.com/IntelRealSense/librealsense.git -b v2.17.1 &&\
-#    cd librealsense && mkdir -p build && cd build &&\
-#    cmake ../ -DBUILD_EXAMPLES=true &&\
-#    make uninstall && make clean && make -j8 && make install &&\
-#    mkdir -p /etc/udev/rules.d &&\
-#    cd ../ && cp config/99-realsense-libusb.rules /etc/udev/rules.d/ &&\
-#    ldconfig
+#RUN apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE &&\
+RUN if [ "$http_proxy" != "" ]; \
+    then \
+      apt-key adv --keyserver keys.gnupg.net \
+      --keyserver-options http-proxy=$http_proxy \
+      --recv-key C8B3A55A6F3EFCDE ;\
+    else \
+      apt-key adv --keyserver keys.gnupg.net \
+      --recv-key C8B3A55A6F3EFCDE ;\
+    fi
+RUN apt-get update && apt-get install -y python3-software-properties software-properties-common &&\
+       rm -rf /var/lib/apt/lists/*
+RUN add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo bionic main" -u &&\
+    apt-get update && apt-get install -y librealsense2-dkms \
+      librealsense2-utils \
+      librealsense2-dev \
+      librealsense2-dbg &&\
+       rm -rf /var/lib/apt/lists/*
 
-WORKDIR /root/
+# move moveit code
+RUN apt-get update && apt-get install -y ros-melodic-ros-controllers ros-melodic-ros-control &&\
+      rm -rf /var/lib/apt/lists/* 
+USER robot
+ARG http_proxy
+WORKDIR /home/robot
+RUN mkdir -p ws_moveit/src
+WORKDIR /home/robot/ws_moveit
+RUN wstool init src &&\
+    wstool merge -t src https://raw.githubusercontent.com/ros-planning/moveit/master/moveit.rosinstall &&\
+    wstool update -t src
+RUN number=`sed -n '/if (callIK(ik_query, adapted_ik_validity_callback, ik_timeout_, state, project && a == 0))/=' src/moveit/moveit_core/constraint_samplers/src/default_constraint_samplers.cpp` &&\
+    echo $number &&\
+    sed -i "${number}a\    if (callIK(ik_query, adapted_ik_validity_callback, ik_timeout_, state, project || a == 0))" src/moveit/moveit_core/constraint_samplers/src/default_constraint_samplers.cpp && \
+    sed -i "${number}d" src/moveit/moveit_core/constraint_samplers/src/default_constraint_samplers.cpp
+
+# build
+WORKDIR /home/robot/ws_moveit/src
+RUN git clone --depth=1 https://github.com/sharronliu/gpd -b libgpd
+RUN git clone --depth=1 https://github.com/ros-industrial/universal_robot.git
+RUN git clone --depth=1 https://github.com/ros-industrial/ur_modern_driver.git -b kinetic-devel
+RUN git clone --depth=1 https://github.com/ros-industrial/industrial_core.git -b kinetic-devel 
+WORKDIR /home/robot/ws_moveit
+RUN ls src/ &&rm devel install build logs -rf
+RUN catkin config --extend /opt/ros/melodic --cmake-args -DCMAKE_BUILD_TYPE=Release -DUSE_OPENVINO=ON -DBUILD_RANDOM_PICK=ON -DUSE_CAFFE=OFF &&\
+    source /opt/intel/computer_vision_sdk/bin/setupvars.sh && export OpenCV_DIR=/usr/share/OpenCV &&catkin build
+WORKDIR /home/robot/ws_moveit
