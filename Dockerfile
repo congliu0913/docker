@@ -106,3 +106,6 @@ RUN ls src/ &&rm devel install build logs -rf
 RUN catkin config --extend /opt/ros/melodic --cmake-args -DCMAKE_BUILD_TYPE=Release -DUSE_OPENVINO=ON -DBUILD_RANDOM_PICK=ON -DUSE_CAFFE=OFF &&\
     source /opt/intel/computer_vision_sdk/bin/setupvars.sh && export OpenCV_DIR=/usr/share/OpenCV &&catkin build
 WORKDIR /home/robot/ws_moveit
+USER root
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options http-proxy=$http_proxy --recv-key F42ED6FBAB17C654
+RUN apt-get update && apt-get -y -qq dist-upgrade
