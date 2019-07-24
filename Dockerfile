@@ -32,7 +32,7 @@ ENV LANG en_US.UTF-8
 RUN apt update && apt install -y curl gnupg2
 RUN curl http://repo.ros2.org/repos.key | apt-key add -
 RUN sh -c 'echo "deb [arch=amd64,arm64] http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options http-proxy=$http_proxy --recv-key F42ED6FBAB17C654
+#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options http-proxy=$http_proxy --recv-key F42ED6FBAB17C654
 
 #ENV DEBIAN_FRONTEND=noninteractive
 
