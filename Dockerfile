@@ -1,6 +1,6 @@
-# moveit/moveit_example_apps:random_pick_place
-# install openvine_R5
-from moveit/moveit:master-source
+# install openvine_2019_R1
+# install ros2 
+from ubuntu:bionic
 
 MAINTAINER Cong Liu congx.liu@intel.com
 
@@ -8,11 +8,7 @@ SHELL ["/bin/bash", "-c"]
 
 ARG http_proxy
 RUN useradd --create-home --no-log-init --shell /bin/bash --password robot robot
-ENV ROS1_DISTRO melodic
-RUN apt-get update && apt-get install -y \
-      ros-$ROS1_DISTRO-rosdoc-lite &&\
-      rm -rf /var/lib/apt/lists/*
-RUN apt-get update && apt-get install -y \ 
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \ 
       vim \
       wget \
       build-essential \
@@ -28,84 +24,93 @@ RUN apt-get update && apt-get install -y \
       rm -rf /var/lib/apt/lists/*
 RUN pip install sphinx_rtd_theme
 
-# install openvino 
+RUN apt-get update && apt-get install --no-install-recommends -y locales \
+	lsb-release
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+
+RUN apt update && apt install -y curl gnupg2
+RUN curl http://repo.ros2.org/repos.key | apt-key add -
+RUN sh -c 'echo "deb [arch=amd64,arm64] http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
+RUN sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options http-proxy=$http_proxy --recv-key F42ED6FBAB17C654
+
+#ENV DEBIAN_FRONTEND=noninteractive
+
+RUN DEBIAN_FRONTEND=noninteractive apt update && DEBIAN_FRONTEND=noninteractive apt install -y \
+ 	build-essential \
+	cmake \
+	git \
+	python3-colcon-common-extensions \
+	python3-pip \
+	python-rosdep \
+	python3-vcstool \
+	cmake \
+	python3-lark-parser \
+	python3-lxml \
+	python3-numpy \
+	python3-pip \
+	python-rosdep \
+	python3-vcstool \
+	wget
+RUN python3 -m pip install -U \
+	argcomplete \
+	flake8 \
+	flake8-blind-except \
+	flake8-builtins \
+	flake8-class-newline \
+	flake8-comprehensions \
+	flake8-deprecated \
+	flake8-docstrings \
+	flake8-import-order \
+	flake8-quotes \
+	pytest-repeat \
+	pytest-rerunfailures \
+	pytest-cov \
+	pytest-runner \
+	setuptools
+RUN apt install --no-install-recommends -y \
+	libasio-dev \
+	libtinyxml2-dev
+
+ENV ROS2_WS /home/robot/ros2_ws
+RUN rosdep init
+RUN python3 -m pip uninstall pytest -y
+RUN mkdir -p $ROS2_WS/src
+WORKDIR $ROS2_WS
+RUN wget https://raw.githubusercontent.com/ros2/ros2/release-dashing-20190614/ros2.repos
+RUN vcs import src < ros2.repos
+WORKDIR $ROS2_WS
+RUN rosdep update &&rosdep install --from-paths src --ignore-src --rosdistro dashing -y --skip-keys "console_bridge fastcdr fastrtps libopensplice67 libopensplice69 rti-connext-dds-5.3.1 urdfdom_headers"
+RUN colcon build --symlink-install
+WORKDIR /tmp
+
+# opencl
 WORKDIR /home/robot/code
-RUN mkdir -p openvino_binart &&cd openvino_binart && \
-    apt-get update && apt-get install -y cpio && \
-      rm -rf /var/lib/apt/lists/* &&\
-    # wget openvino_R5
-    wget -c http://registrationcenter-download.intel.com/akdlm/irc_nas/15078/l_openvino_toolkit_p_2018.5.455.tgz && \
-    tar -xvf l_openvino_toolkit_p_2018.5.455.tgz &&rm l_openvino_toolkit_p_2018.5.455.tgz && \
-    cd l_openvino_toolkit_p_2018.5.455 && \
-    ./install_cv_sdk_dependencies.sh &&\
+RUN mkdir -p OpenCl/intel-opencl
+WORKDIR /home/robot/code/OpenCl/
+RUN wget -c https://github.com/intel/compute-runtime/releases/download/19.04.12237/intel-gmmlib_18.4.1_amd64.deb &&\
+    wget -c https://github.com/intel/compute-runtime/releases/download/19.04.12237/intel-igc-core_18.50.1270_amd64.deb &&\
+    wget -c https://github.com/intel/compute-runtime/releases/download/19.04.12237/intel-igc-opencl_18.50.1270_amd64.deb &&\
+    wget -c https://github.com/intel/compute-runtime/releases/download/19.04.12237/intel-opencl_19.04.12237_amd64.deb &&\
+    wget -c https://github.com/intel/compute-runtime/releases/download/19.04.12237/intel-ocloc_19.04.12237_amd64.deb &&\
+    dpkg -i ./*.deb
+
+# openvino
+WORKDIR /home/robot/code
+RUN mkdir -p openvino_binart
+RUN apt-get install -y cpio
+RUN wget -c http://registrationcenter-download.intel.com/akdlm/irc_nas/15512/l_openvino_toolkit_p_2019.1.144.tgz &&\
+    tar -xvf l_openvino_toolkit_p_2019.1.144.tgz &&\
+    cd l_openvino_toolkit_p_2019.1.144 &&\
+    ./install_openvino_dependencies.sh &&\
     sed -i 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg &&\
-    ./install.sh --silent silent.cfg &&\
-    # install dependencies
-    cd /opt/intel/computer_vision_sdk/install_dependencies &&\
-    ./install_NEO_OCL_driver.sh &&\
-    # build example
-    cd /home/robot/code &&\
-    mkdir -p openvino_binart_example/build && cd /home/robot/code/openvino_binart_example/build &&\
-    . /opt/intel/computer_vision_sdk/bin/setupvars.sh&& cmake /opt/intel/computer_vision_sdk/deployment_tools/inference_engine/samples/ && make && cd .. &&\
-    /bin/cp -rf build /opt/intel/computer_vision_sdk/deployment_tools/inference_engine/samples/ &&\
-    cd /home/robot/ &&rm -rf /home/robot/code/openvino_* 
+    ./install.sh --silent silent.cfg
 
-# install gpg
-WORKDIR /home/robot/code
-RUN git clone --depth=1 https://github.com/atenpas/gpg.git
-WORKDIR /home/robot/code/gpg
-RUN mkdir build
-WORKDIR /home/robot/code/gpg/build
-RUN cmake .. && make && make install
-RUN ldconfig
+RUN . /opt/intel/openvino/bin/setupvars.sh &&\
+    mkdir -p /home/robot/code/openvino_binart_example &&\
+    cd /home/robot/code/openvino_binart_example &&\
+    mkdir -p build && cd build &&\
+    cmake /opt/intel/openvino/deployment_tools/inference_engine/samples/ && make && cd .. &&\
+    /bin/cp -rf build /opt/intel/openvino/deployment_tools/inference_engine/samples/
 
-# install librealsense
-#RUN apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE &&\
-RUN if [ "$http_proxy" != "" ]; \
-    then \
-      apt-key adv --keyserver keys.gnupg.net \
-      --keyserver-options http-proxy=$http_proxy \
-      --recv-key C8B3A55A6F3EFCDE ;\
-    else \
-      apt-key adv --keyserver keys.gnupg.net \
-      --recv-key C8B3A55A6F3EFCDE ;\
-    fi
-RUN apt-get update && apt-get install -y python3-software-properties software-properties-common &&\
-       rm -rf /var/lib/apt/lists/*
-RUN add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo bionic main" -u &&\
-    apt-get update && apt-get install -y librealsense2-dkms \
-      librealsense2-utils \
-      librealsense2-dev \
-      librealsense2-dbg &&\
-       rm -rf /var/lib/apt/lists/*
-
-# move moveit code
-RUN apt-get update && apt-get install -y ros-melodic-ros-controllers ros-melodic-ros-control &&\
-      rm -rf /var/lib/apt/lists/* 
-USER robot
-ARG http_proxy
-WORKDIR /home/robot
-RUN mkdir -p ws_moveit/src
-WORKDIR /home/robot/ws_moveit
-RUN wstool init src &&\
-    wstool merge -t src https://raw.githubusercontent.com/ros-planning/moveit/master/moveit.rosinstall &&\
-    wstool update -t src
-RUN number=`sed -n '/if (callIK(ik_query, adapted_ik_validity_callback, ik_timeout_, state, project && a == 0))/=' src/moveit/moveit_core/constraint_samplers/src/default_constraint_samplers.cpp` &&\
-    echo $number &&\
-    sed -i "${number}a\    if (callIK(ik_query, adapted_ik_validity_callback, ik_timeout_, state, project || a == 0))" src/moveit/moveit_core/constraint_samplers/src/default_constraint_samplers.cpp && \
-    sed -i "${number}d" src/moveit/moveit_core/constraint_samplers/src/default_constraint_samplers.cpp
-
-# build
-WORKDIR /home/robot/ws_moveit/src
-RUN git clone --depth=1 https://github.com/sharronliu/gpd -b libgpd
-RUN git clone --depth=1 https://github.com/ros-industrial/universal_robot.git
-RUN git clone --depth=1 https://github.com/ros-industrial/ur_modern_driver.git -b kinetic-devel
-RUN git clone --depth=1 https://github.com/ros-industrial/industrial_core.git -b kinetic-devel 
-WORKDIR /home/robot/ws_moveit
-RUN ls src/ &&rm devel install build logs -rf
-RUN catkin config --extend /opt/ros/melodic --cmake-args -DCMAKE_BUILD_TYPE=Release -DUSE_OPENVINO=ON -DBUILD_RANDOM_PICK=ON -DUSE_CAFFE=OFF &&\
-    source /opt/intel/computer_vision_sdk/bin/setupvars.sh && export OpenCV_DIR=/usr/share/OpenCV &&catkin build
-WORKDIR /home/robot/ws_moveit
-USER root
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options http-proxy=$http_proxy --recv-key F42ED6FBAB17C654
 RUN apt-get update && apt-get -y -qq dist-upgrade
