@@ -12,6 +12,6 @@ ARG http_proxy
 RUN apt-get update &&\
       apt-get install -qq -y libboost-all-dev sudo lcov
 # install librealsense
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options http-proxy=$http_proxy --recv-key C8B3A55A6F3EFCDE &&\
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE &&\
       sh -c 'echo "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo `lsb_release -cs` main" > /etc/apt/sources.list.d/librealsense.list' &&\
       apt update && apt-get install -y librealsense2-dkms librealsense2-utils librealsense2-dev
