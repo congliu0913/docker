@@ -20,7 +20,7 @@ RUN git submodule update --init --recursive &&\
     chmod +x install_dependencies.sh &&\
     ./install_dependencies.sh
 RUN mkdir build && cd build &&\
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DGEMM=MKL -DMKLROOT=/usr/local/lib/mklml -DENABLE_MKL_DNN=ON -DENABLE_CLDNN=ON .. &&\
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DGEMM=MKL -DMKLROOT=/usr/local/lib/mklml -DENABLE_MKL_DNN=ON -DENABLE_CLDNN=ON ..
 WORKDIR $DEPS_DIR/openvino/inference-engine/build
 RUN make -j8
 
