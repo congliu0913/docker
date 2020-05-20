@@ -1,11 +1,6 @@
-########################################################
-# Dockerfile to setup base container image for coverity and protex scan
-# Based on Ubuntu 18.04
-########################################################
-
 # Set the base image to OSRF ros2 dashing
 
-FROM osrf/ros2:dashing-desktop
+FROM congliu0913/ros2:opencv-3-4-2
 
 MAINTAINER Liu Cong "congx.liu@intel.com"
 
@@ -16,17 +11,26 @@ RUN apt update && apt install libpcl-dev
 
 # install gpg
 WORKDIR $DEPS_WS
-RUN git clone --depth 1  https://github.com/atenpas/gpg.git \
-    cd gpg \
-    mkdir build && cd build \
-    cmake .. && make \
-    make install \
+RUN git clone --depth 1  https://github.com/atenpas/gpg.git &&\
+    cd gpg &&\
+    mkdir build && cd build &&\
+    cmake .. && make &&\
+    make install &&\
     ls /usr/local/lib/libgrasp_candidates_generator.so
 
 # install gpd
-#WORKDIR $DEPS_WS
-#RUN git clone --depth 1 https://github.com/sharronliu/gpd.git -b libgpd \
-#    cd gpd/src/gpd \
-#    mkdir build && cd build \
-#    cmake -DUSE_OPENVINO=ON .. && make \
-#    make install 
+WORKDIR $DEPS_WS
+RUN git clone --depth 1 https://github.com/sharronliu/gpd.git -b libgpd &&\
+    cd gpd/src/gpd &&\
+    mkdir build && cd build &&\
+    cmake -DUSE_OPENVINO=ON .. && make &&\
+    make install 
+
+# install ur_modern_driver
+WORKDIR $DEPS_WS
+RUN git clone --depth 1 https://github.com/RoboticsYY/ur_modern_driver.git -b libgpd &&\
+    cd ur_modern_driver/libur_modern_driver &&\
+    mkdir -p build && cd build &&\
+    cmake -DCMAKE_BUILD_TYPE=Release .. && make && \
+    make install
+
