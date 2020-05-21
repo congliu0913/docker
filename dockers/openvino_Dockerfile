@@ -1,4 +1,4 @@
-FROM congliu0913/ros2:mkl-opencl
+FROM congliu0913/ros2:cmake11
 
 MAINTAINER Liu Cong "congliu0913@126.com"
 
