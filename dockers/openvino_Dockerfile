@@ -4,13 +4,6 @@ MAINTAINER Liu Cong "congliu0913@126.com"
 
 ARG DEPS_DIR=/root/deps
 
-#install cmake 3.11
-WORKDIR $DEPS_DIR
-RUN wget https://www.cmake.org/files/v3.14/cmake-3.14.3.tar.gz && \
-    tar xf cmake-3.14.3.tar.gz && \
-    (cd cmake-3.14.3 && ./bootstrap --parallel=$(nproc --all) && make --jobs=$(nproc --all) && make install) && \
-    rm -rf cmake-3.14.3 cmake-3.14.3.tar.gz
-
 #install openvino
 WORKDIR $DEPS_DIR
 RUN apt-get update && apt-get install -y git
@@ -29,5 +22,5 @@ RUN mkdir /usr/share/InferenceEngine &&\
     cp InferenceEngineConfig*.cmake /usr/share/InferenceEngine &&\
     cp targets.cmake /usr/share/InferenceEngine &&\
     echo `pwd`/../bin/intel64/Release/lib | sudo tee -a /etc/ld.so.conf.d/openvino.conf &&\
-   ldconfig
+    ldconfig
 
