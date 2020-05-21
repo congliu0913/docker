@@ -4,6 +4,8 @@ MAINTAINER Liu Cong "congliu0913@126.com"
 
 ARG DEPS_DIR=/root/deps
 
+RUN apt-get update
+
 #install openvino
 WORKDIR $DEPS_DIR
 RUN apt-get update && apt-get install -y git

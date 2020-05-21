@@ -4,13 +4,15 @@ FROM congliu0913/ros2:opencv-3-4-2
 
 MAINTAINER Liu Cong "congx.liu@intel.com"
 
-ARG DEPS_WS=/opt/deps_ws
+ARG DEPS_DEPS=/root/deps
 
 # install pcl
-RUN apt update && apt install libpcl-dev
+RUN apt update && apt install -y libpcl-dev
 
+#install object-msgs
+RUN apt-get install -y ros-dashing-object-msgs
 # install gpg
-WORKDIR $DEPS_WS
+WORKDIR $DEPS_DEPS
 RUN git clone --depth 1  https://github.com/atenpas/gpg.git &&\
     cd gpg &&\
     mkdir build && cd build &&\
@@ -19,7 +21,7 @@ RUN git clone --depth 1  https://github.com/atenpas/gpg.git &&\
     ls /usr/local/lib/libgrasp_candidates_generator.so
 
 # install gpd
-WORKDIR $DEPS_WS
+WORKDIR $DEPS_DEPS
 RUN git clone --depth 1 https://github.com/sharronliu/gpd.git -b libgpd &&\
     cd gpd/src/gpd &&\
     mkdir build && cd build &&\
@@ -27,8 +29,8 @@ RUN git clone --depth 1 https://github.com/sharronliu/gpd.git -b libgpd &&\
     make install 
 
 # install ur_modern_driver
-WORKDIR $DEPS_WS
-RUN git clone --depth 1 https://github.com/RoboticsYY/ur_modern_driver.git -b libgpd &&\
+WORKDIR $DEPS_DEPS
+RUN git clone --depth 1 https://github.com/RoboticsYY/ur_modern_driver.git -b libur_modern_driver &&\
     cd ur_modern_driver/libur_modern_driver &&\
     mkdir -p build && cd build &&\
     cmake -DCMAKE_BUILD_TYPE=Release .. && make && \
