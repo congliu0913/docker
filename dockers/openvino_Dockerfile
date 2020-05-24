@@ -23,6 +23,6 @@ WORKDIR $DEPS_DIR/openvino/inference-engine/build
 RUN mkdir /usr/share/InferenceEngine &&\
     cp InferenceEngineConfig*.cmake /usr/share/InferenceEngine &&\
     cp targets.cmake /usr/share/InferenceEngine &&\
-    echo `pwd`/../bin/intel64/Release/lib | sudo tee -a /etc/ld.so.conf.d/openvino.conf &&\
-    ldconfig
+    echo `pwd`/../bin/intel64/Release/lib | sudo tee -a /etc/ld.so.conf.d/openvino.conf
+RUN echo "Install end"
 
